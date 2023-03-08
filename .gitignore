@@ -1,0 +1,9 @@
+#vscode 
+#build folder
+/cmake-build/
+#launch and debug datein
+/.vscode/
+
+
+#Git
+.DS_Store
