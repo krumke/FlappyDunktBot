@@ -1,6 +1,7 @@
 #include "WindowCaptureMac.h"
 #include <CoreGraphics/CoreGraphics.h>
 #include <CoreFoundation/CoreFoundation.h>
+#include <opencv2/core/mat.hpp>
 
 // Constructors:
 WindowCaptureMac::WindowCaptureMac(std::string const &windowOwner)
@@ -19,7 +20,8 @@ WindowCaptureMac::WindowCaptureMac(std::string const &windowOwner)
         {
             if (CFStringCompare(windowOwnerCFString, windowOwnerNameRef, 0) == kCFCompareEqualTo)
             {
-                windowID = (CFNumberRef)CFDictionaryGetValue(windowInfo, kCGWindowNumber);
+                auto windowIDNumberRef = (CFNumberRef)CFDictionaryGetValue(windowInfo, kCGWindowNumber);
+                CFNumberGetValue(windowIDNumberRef, kCFNumberSInt32Type, &windowID);
                 break;
             }
         }
@@ -29,26 +31,18 @@ WindowCaptureMac::WindowCaptureMac(std::string const &windowOwner)
     CFRelease(windowOwnerCFString);
 }
 
-WindowCaptureMac::WindowCaptureMac(int const newWindowID)
+WindowCaptureMac::WindowCaptureMac(uint32_t const newWindowID)
+    : windowID(newWindowID)
 {
-    windowID = CFNumberCreate(NULL, kCFNumberIntType, &newWindowID);
-}
-
-// Destuctor:
-WindowCaptureMac::~WindowCaptureMac()
-{
-    CFRelease(windowID);
 }
 
 // Methods:
-int WindowCaptureMac::getWindowID() const
+uint32_t WindowCaptureMac::getWindowID() const
 {
-    if (windowID == NULL)
-    {
-        return -1;
-    }
+    return windowID;
+}
 
-    int windowIDInt;
-    CFNumberGetValue(windowID, kCFNumberSInt32Type, &windowIDInt);
-    return windowIDInt;
+cv::Mat WindowCaptureMac::caputre()
+{
+    auto cgImgRef = CGWindowListCreateImage(CGRectNull, kCGWindowListOptionIncludingWindow, windowID, kCGWindowImageBoundsIgnoreFraming);
 }

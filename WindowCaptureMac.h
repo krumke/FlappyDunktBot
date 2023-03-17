@@ -2,25 +2,22 @@
 #define WINDOWCAPTUREMAC_H
 
 #include <string>
-#include <CoreGraphics/CoreGraphics.h>
-#include <CoreFoundation/CFNumber.h>
+#include <opencv2/core/mat.hpp>
 
 class WindowCaptureMac
 {
 private:
-    CFNumberRef windowID = NULL;
+    uint32_t windowID;
 
 public:
     WindowCaptureMac(std::string const &windowOwner);
-    WindowCaptureMac(int const newWindowID);
+    WindowCaptureMac(uint32_t const newWindowID);
 
-    virtual ~WindowCaptureMac();
+    // virtual ~WindowCaptureMac();
 
-    int getWindowID() const;
+    uint32_t getWindowID() const;
 
-    // CGImageRef caputre();
+    cv::Mat caputre();
 };
-
-void printRunningWindowOwners();
 
 #endif
