@@ -9,8 +9,15 @@ using namespace cv;
 int main()
 {
 
-    auto wc = WindowCaptureMac("CLion");
+    auto wc = WindowCaptureMac("Control Strip");
     std::cout << wc.getWindowID() << std::endl;
+
+    // wc.testConverter();
+
+    auto screenshot = wc.caputre();
+    imshow("please", screenshot);
+    waitKey();
+
     std::string imagePath1 = samples::findFile("/Users/krumke/Documents/krumke_git/FlappyDunktBot/FlappyDunkGame.jpg");
     std::string imagePath2 = samples::findFile("/Users/krumke/Documents/krumke_git/FlappyDunktBot/FlappyDunkPlayer.png");
 
