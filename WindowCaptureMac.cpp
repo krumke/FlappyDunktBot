@@ -25,6 +25,10 @@ WindowCaptureMac::WindowCaptureMac(std::string const &windowOwner)
             {
                 auto windowIDNumberRef = (CFNumberRef)CFDictionaryGetValue(windowInfo, kCGWindowNumber);
                 CFNumberGetValue(windowIDNumberRef, kCFNumberSInt32Type, &windowID);
+                auto windowSharingState = (CFNumberRef)CFDictionaryGetValue(windowInfo, kCGWindowSharingState);
+                uint32_t sharingState;
+                CFNumberGetValue(windowSharingState, kCFNumberSInt32Type, &sharingState);
+                std::cout << "SharingState: " << sharingState << std::endl;
                 break;
             }
         }
@@ -47,7 +51,6 @@ uint32_t WindowCaptureMac::getWindowID() const
 
 cv::Mat WindowCaptureMac::caputre()
 {
-
     auto cgImgRef = CGWindowListCreateImage(CGRectNull, kCGWindowListOptionIncludingWindow, windowID, kCGWindowImageBoundsIgnoreFraming);
 
     if (cgImgRef == NULL)
@@ -66,16 +69,16 @@ void WindowCaptureMac::convertImgRefToMat(CGImageRef cgImageRef, cv::Mat &image)
 {
     size_t width = CGImageGetWidth(cgImageRef);
     size_t height = CGImageGetHeight(cgImageRef);
-    image = cv::Mat(cv::Size(width, height), CV_8UC3);
-    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-    unsigned char *rawData = image.data;
     size_t bytesPerPixel = 4;
     size_t bytesPerRow = bytesPerPixel * width;
     size_t bitsPerComponent = 8;
+    image = cv::Mat(cv::Size(width, height), CV_8UC4, bytesPerRow);
+    CGColorSpaceRef colorSpace = CGImageGetColorSpace(cgImageRef);
+
+    unsigned char *rawData = image.data;
     CGContextRef context = CGBitmapContextCreate(rawData, width, height,
                                                  bitsPerComponent, bytesPerRow, colorSpace,
-                                                 kCGImageAlphaPremultipliedLast | kCGBitmapByteOrderDefault);
-    CGColorSpaceRelease(colorSpace);
+                                                 kCGImageAlphaPremultipliedFirst);
 
     CGContextDrawImage(context, CGRectMake(0, 0, width, height), cgImageRef);
     CGContextRelease(context);
@@ -99,6 +102,8 @@ void WindowCaptureMac::testConverter()
     {
         cv::Mat cvMat;
         convertImgRefToMat(cgImage, cvMat);
+        cv::cvtColor(cvMat, cvMat, cv::COLOR_RGB2BGR);
+        //    cvMat.convertTo(cvMat, CV_32F, 1.0 / 255);
         cv::imshow("test", cvMat);
         cv::waitKey();
     }

@@ -9,14 +9,22 @@ using namespace cv;
 int main()
 {
 
-    auto wc = WindowCaptureMac("Control Strip");
+    auto wc = WindowCaptureMac(92937);
     std::cout << wc.getWindowID() << std::endl;
 
     // wc.testConverter();
+    while (true)
+    {
 
-    auto screenshot = wc.caputre();
-    imshow("please", screenshot);
-    waitKey();
+        auto screenshot = wc.caputre();
+        imshow("please", screenshot);
+
+        if (waitKey(1) == 'q')
+        {
+            cv::destroyAllWindows();
+            break;
+        }
+    }
 
     std::string imagePath1 = samples::findFile("/Users/krumke/Documents/krumke_git/FlappyDunktBot/FlappyDunkGame.jpg");
     std::string imagePath2 = samples::findFile("/Users/krumke/Documents/krumke_git/FlappyDunktBot/FlappyDunkPlayer.png");
@@ -37,8 +45,8 @@ int main()
     {
         rectangle(haystackImg, maxLoc, cv::Point(maxLoc.x + needleImg.cols, maxLoc.y + needleImg.rows), Scalar::all(0), 2, 8, 0);
 
-        imshow("result_window", haystackImg);
-        waitKey();
+        // imshow("result_window", haystackImg);
+        // waitKey();
     }
 
     return 0;
