@@ -23,6 +23,12 @@ public:
     uint32_t getWindowID() const;
 
     cv::Mat caputre();
+
+    struct NoCaptureableWindow : public std::exception {
+            const char *what() const throw() {
+                return "No Window found that ist captureable. Check Window Name or try restarting the aplication you try to capture";
+            }
+        };
 };
 
 #endif
