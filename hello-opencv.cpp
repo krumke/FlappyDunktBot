@@ -1,23 +1,34 @@
 #include <opencv2/opencv.hpp>
 #include <CoreGraphics/CoreGraphics.h>
 #include <iostream>
+#include <chrono>
 
 #include "WindowCaptureMac.h"
 
 using namespace cv;
 
-int main()
+void testConverter()
 {
+    auto wc = WindowCaptureMac("Mail");
+    wc.testConverter();
+}
 
-    auto wc = WindowCaptureMac(92937);
+void loop()
+{
+    auto wc = WindowCaptureMac("Mail");
     std::cout << wc.getWindowID() << std::endl;
 
-    // wc.testConverter();
+    auto loopTime = std::chrono::high_resolution_clock::now();
+
     while (true)
     {
 
         auto screenshot = wc.caputre();
         imshow("please", screenshot);
+
+        auto fps = 1000.0f / (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - loopTime)).count();
+        std::cout << "FPS: " << fps << std::endl;
+        loopTime = std::chrono::high_resolution_clock::now();
 
         if (waitKey(1) == 'q')
         {
@@ -25,6 +36,14 @@ int main()
             break;
         }
     }
+}
+
+int main()
+{
+
+    testConverter();
+
+    // loop();
 
     std::string imagePath1 = samples::findFile("/Users/krumke/Documents/krumke_git/FlappyDunktBot/FlappyDunkGame.jpg");
     std::string imagePath2 = samples::findFile("/Users/krumke/Documents/krumke_git/FlappyDunktBot/FlappyDunkPlayer.png");

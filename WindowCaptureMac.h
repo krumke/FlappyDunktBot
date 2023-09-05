@@ -12,6 +12,8 @@ private:
 
     void convertImgRefToMat(CGImageRef cgImgRef, cv::Mat &image);
 
+    std::vector<uint8_t> convertImgRefToMatEfficient(CGImageRef cgImgRef);
+
 public:
     WindowCaptureMac(std::string const &windowOwner);
     WindowCaptureMac(uint32_t const newWindowID);
@@ -24,11 +26,13 @@ public:
 
     cv::Mat caputre();
 
-    struct NoCaptureableWindow : public std::exception {
-            const char *what() const throw() {
-                return "No Window found that ist captureable. Check Window Name or try restarting the aplication you try to capture";
-            }
-        };
+    struct NoCaptureableWindow : public std::exception
+    {
+        const char *what() const throw()
+        {
+            return "No Window found that ist captureable. Check Window Name or try restarting the aplication you try to capture";
+        }
+    };
 };
 
 #endif

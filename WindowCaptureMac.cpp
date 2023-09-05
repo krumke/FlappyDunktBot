@@ -72,10 +72,6 @@ cv::Mat WindowCaptureMac::caputre()
 {
     auto cgImgRef = CGWindowListCreateImage(CGRectNull, kCGWindowListOptionIncludingWindow, windowID, kCGWindowImageBoundsIgnoreFraming);
 
-    if (cgImgRef == NULL)
-    {
-        std::cout << "Window not found" << std::endl;
-    }
     cv::Mat cvMat;
     convertImgRefToMat(cgImgRef, cvMat);
 
@@ -104,6 +100,24 @@ void WindowCaptureMac::convertImgRefToMat(CGImageRef cgImageRef, cv::Mat &image)
     CGContextRelease(context);
 }
 
+std::vector<uint8_t> WindowCaptureMac::convertImgRefToMatEfficient(CGImageRef cgImageRef)
+{
+    size_t bytesPerRow = CGImageGetBytesPerRow(cgImageRef);
+    size_t width = CGImageGetWidth(cgImageRef);
+    size_t height = CGImageGetHeight(cgImageRef);
+
+    auto coreGraphicsDataProvider = CGImageGetDataProvider(cgImageRef);
+    CFDataRef coreGraphicsData = CGDataProviderCopyData(coreGraphicsDataProvider);
+
+    const UInt8 *rawBytes = CFDataGetBytePtr(coreGraphicsData);
+
+    std::vector<uint8_t> imageData(rawBytes, rawBytes + CFDataGetLength(coreGraphicsData));
+
+    CFRelease(coreGraphicsData);
+
+    return imageData;
+}
+
 void WindowCaptureMac::testConverter()
 {
 
@@ -120,11 +134,10 @@ void WindowCaptureMac::testConverter()
     }
     else
     {
-        cv::Mat cvMat;
-        convertImgRefToMat(cgImage, cvMat);
+        std::vector<uint8_t> image = convertImgRefToMatEfficient(cgImage);
         // cv::cvtColor(cvMat, cvMat, cv::COLOR_RGB2BGR);
         //  cvMat.convertTo(cvMat, CV_32F, 1.0 / 255);
-        cv::imshow("test", cvMat);
+        cv::imshow("test", image);
         cv::waitKey();
     }
 
