@@ -12,7 +12,11 @@ private:
 
     void convertImgRefToMat(CGImageRef cgImgRef, cv::Mat &image);
 
-    std::vector<uint8_t> convertImgRefToMatEfficient(CGImageRef cgImgRef);
+    void convertImgRefToMatEfficient1(CGImageRef cgImgRef, cv::Mat &image);
+
+    void convertImgRefToMatEfficient2(CGImageRef cgImgRef, cv::Mat &image);
+
+    void convertCGImageRefToMatReuseMemory(CGImageRef cgImageRef, cv::Mat &image);
 
 public:
     WindowCaptureMac(std::string const &windowOwner);

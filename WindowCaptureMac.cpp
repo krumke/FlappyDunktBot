@@ -73,11 +73,39 @@ cv::Mat WindowCaptureMac::caputre()
     auto cgImgRef = CGWindowListCreateImage(CGRectNull, kCGWindowListOptionIncludingWindow, windowID, kCGWindowImageBoundsIgnoreFraming);
 
     cv::Mat cvMat;
-    convertImgRefToMat(cgImgRef, cvMat);
+    convertCGImageRefToMatReuseMemory(cgImgRef, cvMat);
 
     CGImageRelease(cgImgRef);
 
     return cvMat;
+}
+
+// not working
+void WindowCaptureMac::convertCGImageRefToMatReuseMemory(CGImageRef cgImageRef, cv::Mat &image)
+{
+    size_t width = CGImageGetWidth(cgImageRef);
+    size_t height = CGImageGetHeight(cgImageRef);
+    size_t bytesPerRow = CGImageGetBytesPerRow(cgImageRef);
+    size_t expectedDataSize = height * bytesPerRow;
+
+    // Falls die Größe übereinstimmt, wird der Speicher wiederverwendet
+    if (image.empty() || image.cols != width || image.rows != height)
+    {
+        image.create(height, width, CV_8UC4);
+    }
+
+    // Rohdaten von CGImageRef abrufen
+    auto coreGraphicsDataProvider = CGImageGetDataProvider(cgImageRef);
+    CFDataRef coreGraphicsData = CGDataProviderCopyData(coreGraphicsDataProvider);
+    const UInt8 *rawBytes = CFDataGetBytePtr(coreGraphicsData);
+
+    // OpenCV-Matrix mit neuen Daten füllen, prüfe ob die Größe korrekt ist
+    if (image.data && rawBytes)
+    {
+        memcpy(image.data, rawBytes, expectedDataSize); // Kopiere die Daten
+    }
+
+    CFRelease(coreGraphicsData);
 }
 
 void WindowCaptureMac::convertImgRefToMat(CGImageRef cgImageRef, cv::Mat &image)
@@ -100,7 +128,7 @@ void WindowCaptureMac::convertImgRefToMat(CGImageRef cgImageRef, cv::Mat &image)
     CGContextRelease(context);
 }
 
-std::vector<uint8_t> WindowCaptureMac::convertImgRefToMatEfficient(CGImageRef cgImageRef)
+void WindowCaptureMac::convertImgRefToMatEfficient2(CGImageRef cgImageRef, cv::Mat &image)
 {
     size_t bytesPerRow = CGImageGetBytesPerRow(cgImageRef);
     size_t width = CGImageGetWidth(cgImageRef);
@@ -111,11 +139,41 @@ std::vector<uint8_t> WindowCaptureMac::convertImgRefToMatEfficient(CGImageRef cg
 
     const UInt8 *rawBytes = CFDataGetBytePtr(coreGraphicsData);
 
-    std::vector<uint8_t> imageData(rawBytes, rawBytes + CFDataGetLength(coreGraphicsData));
+    image = cv::Mat(height, width, CV_8UC4, (UInt8 *)rawBytes, bytesPerRow);
+
+    cv::cvtColor(image, image, cv::COLOR_BGRA2BGR);
 
     CFRelease(coreGraphicsData);
+}
 
-    return imageData;
+void WindowCaptureMac::convertImgRefToMatEfficient1(CGImageRef cgImageRef, cv::Mat &image)
+{
+    size_t width = CGImageGetWidth(cgImageRef);
+    size_t height = CGImageGetHeight(cgImageRef);
+    size_t bytesPerPixel = 4; // Assuming RGBA (32-bit)
+    size_t bytesPerRow = bytesPerPixel * width;
+    size_t bitsPerComponent = 8; // 8 bits per channel (32 bits total)
+
+    // Directly allocate the cv::Mat with appropriate size and type
+    image.create(height, width, CV_8UC4); // Avoids multiple allocations
+
+    // Get the color space of the image
+    CGColorSpaceRef colorSpace = CGImageGetColorSpace(cgImageRef);
+
+    // Create a CGContext that draws directly into the Mat's data
+    CGContextRef context = CGBitmapContextCreate(image.data, width, height,
+                                                 bitsPerComponent, bytesPerRow, colorSpace,
+                                                 kCGImageAlphaPremultipliedLast);
+
+    // Draw the image directly into the Mat's data buffer
+    if (context != nullptr)
+    {
+        CGContextDrawImage(context, CGRectMake(0, 0, width, height), cgImageRef);
+        CGContextRelease(context); // Release the context as soon as it's no longer needed
+    }
+
+    // Convert from RGBA to BGR (OpenCV uses BGR by default)
+    // cv::cvtColor(image, image, cv::COLOR_RGBA2BGR);
 }
 
 void WindowCaptureMac::testConverter()
@@ -134,7 +192,8 @@ void WindowCaptureMac::testConverter()
     }
     else
     {
-        std::vector<uint8_t> image = convertImgRefToMatEfficient(cgImage);
+        cv::Mat image;
+        convertImgRefToMatEfficient2(cgImage, image);
         // cv::cvtColor(cvMat, cvMat, cv::COLOR_RGB2BGR);
         //  cvMat.convertTo(cvMat, CV_32F, 1.0 / 255);
         cv::imshow("test", image);

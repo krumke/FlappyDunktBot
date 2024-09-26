@@ -9,8 +9,33 @@ using namespace cv;
 
 void testConverter()
 {
-    auto wc = WindowCaptureMac("Mail");
+    auto wc = WindowCaptureMac("Safari");
     wc.testConverter();
+}
+
+void testTimeComplexity()
+{
+    auto wc = WindowCaptureMac("Safari");
+    auto loopTime = std::chrono::high_resolution_clock::now();
+
+    std::string imagePath1 = samples::findFile("/Users/krumke/Documents/krumke_git/FlappyDunktBot/FlappyDunkGame.jpg");
+    auto haystackImg = imread(imagePath1, IMREAD_UNCHANGED);
+
+    while (true)
+    {
+        auto screenshot = wc.caputre();
+        auto fps = 1000.0f / (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - loopTime)).count();
+        std::cout << "FPS: " << fps << std::endl;
+        loopTime = std::chrono::high_resolution_clock::now();
+
+        imshow("please", screenshot);
+
+        if (waitKey(1) == 'q')
+        {
+            cv::destroyAllWindows();
+            break;
+        }
+    }
 }
 
 void loop()
@@ -41,9 +66,11 @@ void loop()
 int main()
 {
 
-    testConverter();
+    // testConverter();
 
     // loop();
+
+    testTimeComplexity();
 
     std::string imagePath1 = samples::findFile("/Users/krumke/Documents/krumke_git/FlappyDunktBot/FlappyDunkGame.jpg");
     std::string imagePath2 = samples::findFile("/Users/krumke/Documents/krumke_git/FlappyDunktBot/FlappyDunkPlayer.png");
